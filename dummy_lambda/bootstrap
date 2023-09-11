@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "WARNING: This is not an actual lambda!"
+echo "This is a placeholder during terraform setup."
+echo "Please replace this lambda to the actual function by cargo-lambda."
+
+exit 1
