@@ -53,6 +53,11 @@ resource "aws_lambda_function" "lambda" {
   filename         = data.archive_file.lambda.output_path
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
+  environment {
+    variables = {
+      AWS_OUTPUT_BUCKET_NAME = aws_s3_bucket.output.bucket
+    }
+  }
   lifecycle {
     ignore_changes = [source_code_hash]
   }
