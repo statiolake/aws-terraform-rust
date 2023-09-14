@@ -1,3 +1,28 @@
+resource "aws_lambda_function" "lambda" {
+  function_name    = "example-aws-terraform-rust"
+  handler          = "bootstrap"
+  role             = aws_iam_role.lambda_role.arn
+  runtime          = "provided.al2"
+  filename         = data.archive_file.lambda.output_path
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+
+  environment {
+    variables = {
+      AWS_OUTPUT_BUCKET_NAME = aws_s3_bucket.output.bucket
+    }
+  }
+  lifecycle {
+    ignore_changes = [source_code_hash]
+  }
+}
+
+# ここではダミーを指定する
+data "archive_file" "lambda" {
+  type        = "zip"
+  source_dir  = "dummy_lambda"
+  output_path = "archive/dummy_lambda.zip"
+}
+
 resource "aws_iam_role" "lambda_role" {
   name               = "example-aws-terraform-rust-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
@@ -25,6 +50,7 @@ data "aws_iam_policy" "lambda_basic_execution_policy" {
   arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# S3 へのアクセス権限を与える
 data "aws_iam_policy_document" "lambda_policy" {
   source_policy_documents = [data.aws_iam_policy.lambda_basic_execution_policy.policy]
 
@@ -43,28 +69,4 @@ data "aws_iam_policy_document" "lambda_policy" {
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${aws_s3_bucket.output.arn}/*"]
   }
-}
-
-resource "aws_lambda_function" "lambda" {
-  function_name    = "example-aws-terraform-rust"
-  handler          = "bootstrap"
-  role             = aws_iam_role.lambda_role.arn
-  runtime          = "provided.al2"
-  filename         = data.archive_file.lambda.output_path
-  source_code_hash = data.archive_file.lambda.output_base64sha256
-
-  environment {
-    variables = {
-      AWS_OUTPUT_BUCKET_NAME = aws_s3_bucket.output.bucket
-    }
-  }
-  lifecycle {
-    ignore_changes = [source_code_hash]
-  }
-}
-
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_dir  = "dummy_lambda"
-  output_path = "archive/dummy_lambda.zip"
 }
